@@ -31,7 +31,6 @@ func main(){
 	videoDownloader := videodownload.InitViedoDownload(videoId, &youtubeClient)
 	videoDownloader.Download()
 
-
 	
 	fmt.Println("")
 	fmt.Println("Download finished")

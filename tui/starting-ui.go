@@ -1,10 +1,10 @@
-package app
+package tui
 
 import (
 	"fmt"
 
-	"github.com/anjolaoluwaakindipe/fyne-youtube/app/state"
-	videodownload "github.com/anjolaoluwaakindipe/fyne-youtube/videoDownload"
+	"github.com/anjolaoluwaakindipe/fyne-youtube/tui/state"
+	videodownload "github.com/anjolaoluwaakindipe/fyne-youtube/videodownload"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )

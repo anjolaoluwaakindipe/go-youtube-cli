@@ -1,7 +1,8 @@
-package app
+package tui
 
 import (
-	"github.com/anjolaoluwaakindipe/fyne-youtube/app/state"
+	"github.com/anjolaoluwaakindipe/fyne-youtube/tui/state"
+	"github.com/anjolaoluwaakindipe/fyne-youtube/videodownload"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -9,6 +10,7 @@ import (
 // state / model
 type downloadLocationModel struct {
 	textInput textinput.Model
+	videoDownload *videodownload.VideoDownload
 }
 
 // constructor
@@ -20,7 +22,7 @@ func InitializeDownloadLocationModel() downloadLocationModel {
 	ti.CharLimit = 156
 	ti.Width = 20
 
-	return downloadLocationModel{textInput: ti}
+	return downloadLocationModel{textInput: ti, videoDownload: videodownload.InitVideoDownload()}
 }
 
 // init command func
@@ -50,7 +52,7 @@ func (sm downloadLocationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			globalState := state.GlobalStateInstance()
 			globalState.SetDownloadDirectory(sm.textInput.Value())
-			return InitializeSingleVideoDownloadModel(), tickCmd()
+			return InitializeSingleVideoDownloadModel(), sm.videoDownload.SingleVideoDownload(globalState.GetVideoId(), globalState.GetDownloadDirectory())
 		}
 	}
 

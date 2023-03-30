@@ -1,10 +1,12 @@
-package app
+package tui
 
 import (
-	videodownload "github.com/anjolaoluwaakindipe/fyne-youtube/videoDownload"
+	"strings"
+
+	videodownload "github.com/anjolaoluwaakindipe/fyne-youtube/videodownload"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/anjolaoluwaakindipe/fyne-youtube/app/state"
+	"github.com/anjolaoluwaakindipe/fyne-youtube/tui/state"
 
 	"github.com/charmbracelet/bubbles/textinput"
 )
@@ -67,8 +69,11 @@ func (vm videoIdSearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return vm, tea.Quit
 
 		case "enter":
+			if(strings.ReplaceAll(strings.ReplaceAll(vm.textInput.Value(), " ", "", ) ,"\r\n", "") == ""){
+				return vm, nil
+			}
 			globalState := state.GlobalStateInstance()
-			globalState.SetVideoId(vm.textInput.Value())
+			globalState.SetVideoId(strings.ReplaceAll(vm.textInput.Value(),"\n", ""))
 			return InitializeDownloadLocationModel(), nil
 		}
 

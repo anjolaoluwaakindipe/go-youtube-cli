@@ -2,49 +2,47 @@ package videodownload
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
-	"os/signal"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
-
-	"github.com/gosuri/uilive"
+	"github.com/anjolaoluwaakindipe/fyne-youtube/app"
+	"github.com/anjolaoluwaakindipe/fyne-youtube/appmsg"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/kkdai/youtube/v2"
 )
 
 // VideoDownload properties
 type VideoDownload struct {
-	videoUrl      string
-	videoClient   *youtube.Client
-	consoleWriter *uilive.Writer
-	mu            sync.Mutex
+	videoClient *youtube.Client
+	mu          sync.Mutex
+	program     *tea.Program
 }
 
 // Video Download Constructor
-func InitViedoDownload(videoUrl string, videoClient *youtube.Client) *VideoDownload {
-	return &VideoDownload{videoUrl: videoUrl, videoClient: videoClient, consoleWriter: uilive.New()}
+func InitVideoDownload() *VideoDownload {
+
+	return &VideoDownload{videoClient: &youtube.Client{}, program: app.TuiProgram}
 }
 
 /* Video Download Constructors */
 
 // Gets the video stream from youtube
-func (vd *VideoDownload) getStream(downloadType DownloadType) (video *youtube.Video, stream io.ReadCloser, videoSize int64, getStreamError error) {
+func (vd *VideoDownload) getStream(downloadType DownloadType, videoUrl string) (video *youtube.Video, stream io.ReadCloser, videoSize int64, getStreamError error) {
 
 	var videoFetchingErr error
 
 	// get video information and metadata for a specific download type e.g A single video or a playlist
 	if downloadType == SingleVideo {
-		video, videoFetchingErr = vd.videoClient.GetVideo(vd.videoUrl)
+		video, videoFetchingErr = vd.videoClient.GetVideo(videoUrl)
 	} else {
 		return nil, nil, 0, errors.New("did not give a valid video type")
 	}
 
 	if videoFetchingErr != nil {
-		log.Fatal(videoFetchingErr.Error())
+		log.Fatalln("Video Fetching error: " + videoFetchingErr.Error())
 		return nil, nil, 0, videoFetchingErr
 	}
 	// audio channel with format list
@@ -52,87 +50,107 @@ func (vd *VideoDownload) getStream(downloadType DownloadType) (video *youtube.Vi
 
 	// stream, total youtube video downloaded and stream error
 	stream, videoSize, getStreamError = vd.videoClient.GetStream(video, &format[0])
+
 	return
 }
 
 // shows the download progress of the yooutbe video
-func (vd *VideoDownload) showDownloadProgress(file *os.File, expectedSize int64) {
-
+func (vd *VideoDownload) showDownloadProgress(file *os.File, expectedSize int64, video *youtube.Video, downloadedFileName string) {
+	// run the concurrent function
 	go func() {
 
 		for {
+			// make a mutex lock so to prevent simultaneous access
 			vd.mu.Lock()
-
+			// get file info
 			fileInfo, _ := file.Stat()
-			fmt.Fprintf(vd.consoleWriter, "Status: %v mb / %v mb \n", fileInfo.Size()/1000000, expectedSize/1000000)
-			if fileInfo.Size() == expectedSize {
+			// get the amount downloaded from the size of the file created and the expected size from the stream
+			amountDownloaded := fileInfo.Size()
+			progress := float64(amountDownloaded) / float64(expectedSize)
+
+			// check if they are equal thus breaking the loop
+			if amountDownloaded == expectedSize {
 				break
 			}
-			time.Sleep(time.Millisecond * 300)
+
+			// makes sure that progress messages are sent to the ui
+			if vd.program != nil {
+				vd.program.Send(appmsg.DownloadProgressMsg{Progress: progress, TotalDownloadSize: expectedSize, AmountDownloaded: amountDownloaded, VideoName: video.Title, VideoAuthor: video.Author, DefaultFileName: downloadedFileName, VideoFile: file})
+			}
+
+			// checks every 500 millisecond
+			time.Sleep(time.Millisecond * 500)
+
+			// unlocks the mutex
 			vd.mu.Unlock()
 		}
-		fmt.Fprintf(vd.consoleWriter, "Finished downloading, Total video size: %v mb\n", expectedSize)
-		vd.consoleWriter.Stop()
 	}()
 }
 
 // download the video stream into a file
-func (vd *VideoDownload) Download() {
+func (vd *VideoDownload) SingleVideoDownload(videoId string, directoryPath string) func() tea.Msg {
 
-	vd.consoleWriter.Start()
-	fmt.Print("Getting youtube video stream \n")
-	video, stream, videoSize, streamErr := vd.getStream(SingleVideo)
+	return func() tea.Msg {
+		// call stream method to get the video stream
+		video, stream, videoSize, streamErr := vd.getStream(SingleVideo, videoId)
 
-	fmt.Printf("Starting download for %v by %v... \n", video.Title, video.Author)
-
-	if streamErr != nil {
-		log.Fatal(streamErr.Error())
-		return
-	}
-
-	dowloadedFileName := strings.ReplaceAll(video.Title, " ", "_") + ".mp4"
-
-	file, fileCreationErr := os.Create(dowloadedFileName)
-
-	if fileCreationErr != nil {
-		log.Fatal(fileCreationErr.Error())
-		return
-	}
-
-	vd.showDownloadProgress(file, videoSize)
-	// channels
-	signalChan := make(chan os.Signal)
-	signal.Notify(signalChan, os.Interrupt)
-	signal.Notify(signalChan, syscall.SIGTERM)
-
-	go func() {
-		signal := <-signalChan
-		fmt.Println(signal)
-		fileInfo, _ := file.Stat()
-		fmt.Println(fileInfo.Size())
-		fmt.Println(videoSize)
-		if fileInfo.Size() < videoSize {
-			file.Close()
-			fileRemoverErr := os.Remove(dowloadedFileName)
-			if fileRemoverErr != nil {
-				log.Fatal("File Removal Error: " + fileRemoverErr.Error())
-				return
-			}
-			os.Exit(0)
-
+		// check for stream error
+		if streamErr != nil {
+			log.Fatalln("File Streaming Error: " + streamErr.Error() + " 1 ")
+			return nil
 		}
 
-	}()
+		// format the filename so that it is a valid name that can be used with any os
+		downloadedFileName := strings.ReplaceAll(video.Title, " ", "_") + ".mp4"
 
-	_, fileCopyErr := io.Copy(file, stream)
+		// create the file
+		file, fileCreationErr := os.Create(directoryPath + "/" + downloadedFileName)
 
-	if fileCopyErr != nil {
+		// cheeck for errors while creating the file
+		if fileCreationErr != nil {
+			log.Fatalln("File Creation Error: " + fileCreationErr.Error() + " 2 ")
+			return nil
+		}
 
-		log.Print("File Copy Error: " + fileCopyErr.Error())
-		return
+		// begin display the downloand progress of the video
+		vd.showDownloadProgress(file, videoSize, video, downloadedFileName)
+		// channels
+		// signalChan := make(chan os.Signal)
+		// signal.Notify(signalChan, os.Interrupt)
+		// signal.Notify(signalChan, syscall.SIGTERM)
+
+		// go func() {
+		// 	signal := <-signalChan
+		// 	fmt.Println(signal)
+		// 	fileInfo, _ := file.Stat()
+		// 	fmt.Println(fileInfo.Size())
+		// 	fmt.Println(videoSize)
+		// 	if fileInfo.Size() < videoSize {
+		// 		file.Close()
+		// 		fileRemoverErr := os.Remove(dowloadedFileName)
+		// 		if fileRemoverErr != nil {
+		// 			log.Fatal("File Removal Error: " + fileRemoverErr.Error())
+		// 			return
+		// 		}
+		// 		os.Exit(0)
+
+		// 	}
+
+		// }()
+		// }()
+
+		// begin funnelling the stream to the file that was created (donwloding)
+		_, fileCopyErr := io.Copy(file, stream)
+
+		// check for any errors that may occur while downloading
+		if fileCopyErr != nil {
+			log.Fatal("File Copy Error: " + fileCopyErr.Error())
+			return nil
+		}
+
+		file.Close()
+
+		return nil
+
 	}
-
-	vd.consoleWriter.Stop()
-
-	file.Close()
 }

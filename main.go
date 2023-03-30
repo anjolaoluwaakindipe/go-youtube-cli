@@ -5,18 +5,17 @@ import (
 	"os"
 
 	"github.com/anjolaoluwaakindipe/fyne-youtube/app"
+	"github.com/anjolaoluwaakindipe/fyne-youtube/tui"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+func main() {
 
-func main(){
-
-	// youtubeClient := youtube.Client{}
 
 	// fmt.Println("Please Input a video Id from youtube")
 	// fmt.Print("-> ")
 	// reader := bufio.NewReader(os.Stdin)
-	
+
 	// videoId, stringReadErr := reader.ReadString('\n');
 
 	// if stringReadErr != nil{
@@ -28,19 +27,16 @@ func main(){
 
 	// videodownload.InitViedoDownload(videoId, &youtubeClient)
 
-	p := tea.NewProgram(app.InitialStartingUIModel())
-	if err:=p.Start(); err!=nil {
+	app.TuiProgram = tea.NewProgram(tui.InitialStartingUIModel())
+	if err:=app.TuiProgram.Start(); err!=nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
-        os.Exit(1)
+	    os.Exit(1)
 	}
 	// videoDownloader.Download()
+	// fmt.Println("Starting download")
+	// videodownload.VideoDownloadInstance.SingleVideoDownload("ljuKnv9D5JU")()
 
-	
 	// fmt.Println("")
 	// fmt.Println("Download finished")
 
-	
-	
-
-	
 }

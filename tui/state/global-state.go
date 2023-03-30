@@ -3,7 +3,7 @@ package state
 import (
 	"sync"
 
-	videodownload "github.com/anjolaoluwaakindipe/fyne-youtube/videoDownload"
+	videodownload "github.com/anjolaoluwaakindipe/fyne-youtube/videodownload"
 )
 
 type globalState struct {

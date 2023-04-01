@@ -86,6 +86,7 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
+			fmt.Print("hello my g hello")
 			var cmds []tea.Cmd
 			if sm.amountDownloaded != sm.totalDownloadSize && sm.amountDownloaded > 0 {
 				cmds = append(cmds, tea.Sequentially(sm.DeleteVideo, tea.Quit))
@@ -117,7 +118,6 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmds []tea.Cmd
 		if msg.Progress >= 1.0 {
 			cmds = append(cmds, tea.Sequentially(pauseProgress()))
-			return InitializeSuccessfulDownloadModel(), tea.Batch(cmds...)
 		} else {
 			cmd := sm.progress.SetPercent(float64(msg.Progress))
 			sm.amountDownloaded = msg.AmountDownloaded
@@ -134,6 +134,7 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// FrameMsg is sent when the progress bar wants to animate itself
 	case progress.FrameMsg:
+
 		progressModel, cmd := sm.progress.Update(msg)
 		sm.progress = progressModel.(progress.Model)
 		return sm, cmd

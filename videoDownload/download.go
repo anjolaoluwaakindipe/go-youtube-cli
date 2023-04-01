@@ -58,16 +58,28 @@ func (vd *VideoDownload) showDownloadProgress(file *os.File, expectedSize int64,
 	// run the concurrent function
 	go func() {
 		for {
+
+			if file == nil {
+				break
+			}
 			// make a mutex lock so to prevent simultaneous access
 			vd.mu.Lock()
 			// get file info
+			if file == nil {
+				break
+			}
 			fileInfo, _ := file.Stat()
 			// get the amount downloaded from the size of the file created and the expected size from the stream
+			if file == nil {
+				break
+			}
 			amountDownloaded := fileInfo.Size()
 			progress := float64(amountDownloaded) / float64(expectedSize)
 
 			// check if they are equal thus breaking the loop
 			if amountDownloaded == expectedSize {
+				file.Close()
+				vd.program.Send(appmsg.DownloadComplete{})
 				break
 			}
 
@@ -145,7 +157,6 @@ func (vd *VideoDownload) SingleVideoDownload(videoId string, directoryPath strin
 			return nil
 		}
 
-		file.Close()
 
 		return nil
 	}

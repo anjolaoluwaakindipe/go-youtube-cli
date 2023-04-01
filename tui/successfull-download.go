@@ -19,7 +19,7 @@ type RetryOptions struct {
 }
 
 func InitializeSuccessfulDownloadModel() successfulDownloadModel {
-	options := []RetryOptions{{text: "Download another video?", message: appmsg.DownloadAnotherVideoMsg{}}}
+	options := []RetryOptions{{text: "Do you want to download another video?", message: appmsg.DownloadAnotherVideoMsg{}}, {text: "Do you want to quit?", message: appmsg.QuitMsg{}}}
 
 	return successfulDownloadModel{choices: options, selected: 0}
 }
@@ -63,7 +63,7 @@ func (sdm successfulDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (sdm successfulDownloadModel) View() string {
 	s := ""
 
-	s += "Video downloaded successfully!!! \n \n "
+	s += "Video downloaded successfully!!! \n \n"
 
 	for i, choice := range sdm.choices {
 		cursor := " "

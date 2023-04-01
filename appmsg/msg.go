@@ -13,3 +13,9 @@ type DownloadProgressMsg struct {
 }
 
 type DownloadErrorMsg error
+
+type DownloadAnotherVideoMsg struct{}
+
+type QuitMsg struct{}
+
+type DownloadComplete struct{}

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+
 	"github.com/anjolaoluwaakindipe/fyne-youtube/app"
 	"github.com/anjolaoluwaakindipe/fyne-youtube/appmsg"
 	tea "github.com/charmbracelet/bubbletea"
@@ -23,7 +24,6 @@ type VideoDownload struct {
 
 // Video Download Constructor
 func InitVideoDownload() *VideoDownload {
-
 	return &VideoDownload{videoClient: &youtube.Client{}, program: app.TuiProgram}
 }
 
@@ -31,7 +31,6 @@ func InitVideoDownload() *VideoDownload {
 
 // Gets the video stream from youtube
 func (vd *VideoDownload) getStream(downloadType DownloadType, videoUrl string) (video *youtube.Video, stream io.ReadCloser, videoSize int64, getStreamError error) {
-
 	var videoFetchingErr error
 
 	// get video information and metadata for a specific download type e.g A single video or a playlist
@@ -58,18 +57,29 @@ func (vd *VideoDownload) getStream(downloadType DownloadType, videoUrl string) (
 func (vd *VideoDownload) showDownloadProgress(file *os.File, expectedSize int64, video *youtube.Video, downloadedFileName string) {
 	// run the concurrent function
 	go func() {
-
 		for {
+
+			if file == nil {
+				break
+			}
 			// make a mutex lock so to prevent simultaneous access
 			vd.mu.Lock()
 			// get file info
+			if file == nil {
+				break
+			}
 			fileInfo, _ := file.Stat()
 			// get the amount downloaded from the size of the file created and the expected size from the stream
+			if file == nil {
+				break
+			}
 			amountDownloaded := fileInfo.Size()
 			progress := float64(amountDownloaded) / float64(expectedSize)
 
 			// check if they are equal thus breaking the loop
 			if amountDownloaded == expectedSize {
+				file.Close()
+				vd.program.Send(appmsg.DownloadComplete{})
 				break
 			}
 
@@ -89,7 +99,6 @@ func (vd *VideoDownload) showDownloadProgress(file *os.File, expectedSize int64,
 
 // download the video stream into a file
 func (vd *VideoDownload) SingleVideoDownload(videoId string, directoryPath string) func() tea.Msg {
-
 	return func() tea.Msg {
 		// call stream method to get the video stream
 		video, stream, videoSize, streamErr := vd.getStream(SingleVideo, videoId)
@@ -148,9 +157,7 @@ func (vd *VideoDownload) SingleVideoDownload(videoId string, directoryPath strin
 			return nil
 		}
 
-		file.Close()
 
 		return nil
-
 	}
 }

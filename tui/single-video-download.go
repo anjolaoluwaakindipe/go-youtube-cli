@@ -133,9 +133,13 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// FrameMsg is sent when the progress bar wants to animate itself
 	case progress.FrameMsg:
+
 		progressModel, cmd := sm.progress.Update(msg)
 		sm.progress = progressModel.(progress.Model)
 		return sm, cmd
+
+	case appmsg.DownloadComplete:
+		return InitializeSuccessfulDownloadModel(), nil
 
 	default:
 		return sm, nil
@@ -145,7 +149,7 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // commans
 func (sm *singleVideoDownloadModel) DeleteVideo() tea.Msg {
 	sm.VideoFile.Close()
-	os.Remove(sm.directory + "/" + sm.DownloadedFileName)
+	os.Remove(sm.directory + string(os.PathSeparator) + sm.DownloadedFileName)
 	return nil
 }
 

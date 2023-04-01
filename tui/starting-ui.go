@@ -65,7 +65,6 @@ func (m startingUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return InitVideoIdSearchModel(), nil
 
 		}
-
 	}
 	return m, nil
 }

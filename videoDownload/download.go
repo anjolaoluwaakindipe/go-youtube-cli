@@ -12,6 +12,7 @@ import (
 	"github.com/anjolaoluwaakindipe/fyne-youtube/app"
 	"github.com/anjolaoluwaakindipe/fyne-youtube/appmsg"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/dop251/goja/file"
 	"github.com/kkdai/youtube/v2"
 )
 
@@ -51,18 +52,25 @@ func (vd *VideoDownload) getStream(downloadType DownloadType, videoUrl string) (
 	stream, videoSize, getStreamError = vd.videoClient.GetStream(video, &format[0])
 
 	return
-}
+
 
 // shows the download progress of the yooutbe video
-func (vd *VideoDownload) showDownloadProgress(file *os.File, expectedSize int64, video *youtube.Video, downloadedFileName string) {
+func (vd *VideoDownload) showDownloadProgress(file *os.File, expectedSize int, video *youtube.Video, downloadedFileName string) {
 	// run the concurrent function
 	go func() {
 		for {
+            if(file == nil){
+                break;
+            }
 			// make a mutex lock so to prevent simultaneous access
 			vd.mu.Lock()
 			// get file info
+			
 			fileInfo, _ := file.Stat()
 			// get the amount downloaded from the size of the file created and the expected size from the stream
+            if(file == nil){
+                break;
+            }
 			amountDownloaded := fileInfo.Size()
 			progress := float64(amountDownloaded) / float64(expectedSize)
 

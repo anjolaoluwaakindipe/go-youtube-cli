@@ -21,8 +21,10 @@ const (
 )
 
 // messages
-type tickMsg time.Time
-type incrementMsg float64
+type (
+	tickMsg      time.Time
+	incrementMsg float64
+)
 
 // state / model
 type singleVideoDownloadModel struct {
@@ -138,13 +140,12 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	default:
 		return sm, nil
 	}
-
 }
 
 // commans
 func (sm *singleVideoDownloadModel) DeleteVideo() tea.Msg {
-	sm.VideoFile.Close();
-	os.Remove(sm.directory + "\\" + sm.DownloadedFileName)
+	sm.VideoFile.Close()
+	os.Remove(sm.directory + "/" + sm.DownloadedFileName)
 	return nil
 }
 

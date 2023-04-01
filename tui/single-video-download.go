@@ -117,6 +117,7 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmds []tea.Cmd
 		if msg.Progress >= 1.0 {
 			cmds = append(cmds, tea.Sequentially(pauseProgress()))
+			return InitializeSuccessfulDownloadModel(), tea.Batch(cmds...)
 		} else {
 			cmd := sm.progress.SetPercent(float64(msg.Progress))
 			sm.amountDownloaded = msg.AmountDownloaded
@@ -145,7 +146,7 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // commans
 func (sm *singleVideoDownloadModel) DeleteVideo() tea.Msg {
 	sm.VideoFile.Close()
-	os.Remove(sm.directory + "/" + sm.DownloadedFileName)
+	os.Remove(sm.directory + "\\" + sm.DownloadedFileName)
 	return nil
 }
 

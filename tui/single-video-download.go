@@ -28,7 +28,7 @@ type (
 
 // state / model
 type singleVideoDownloadModel struct {
-	downloadType       videodownload.DownloadType
+	downloadType       videodownload.VideDownload
 	videoId            string
 	progress           progress.Model
 	amountDownloaded   int64
@@ -41,9 +41,9 @@ type singleVideoDownloadModel struct {
 }
 
 // constructor
-func InitializeSingleVideoDownloadModel() *singleVideoDownloadModel {
+func InitializeSingleVideoDownloadModel(videoDownload videodownload.VideDownload) *singleVideoDownloadModel {
 	globalState := state.GlobalStateInstance()
-	return &singleVideoDownloadModel{videoId: globalState.GetVideoId(), downloadType: globalState.GetDownloadType(), progress: progress.New(progress.WithDefaultGradient()), directory: globalState.GetDownloadDirectory()}
+	return &singleVideoDownloadModel{videoId: globalState.GetVideoId(), downloadType: videoDownload, progress: progress.New(progress.WithDefaultGradient()), directory: globalState.GetDownloadDirectory()}
 }
 
 // func tickCmd() tea.Cmd {
@@ -59,7 +59,8 @@ func pauseProgress() tea.Cmd {
 }
 
 // init command func
-func (singleVideoDownloadModel) Init() tea.Cmd {
+func (sm singleVideoDownloadModel) Init() tea.Cmd {
+	sm.downloadType.Download(sm.videoId, sm.directory)
 	return nil
 }
 
@@ -91,7 +92,7 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmds = append(cmds, tea.Sequentially(sm.DeleteVideo, tea.Quit))
 				return sm, tea.Batch(cmds...)
 			}
-			return sm, tea.Quit
+			return sm, nil
 		default:
 			return sm, nil
 		}
@@ -148,8 +149,7 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // commans
 func (sm *singleVideoDownloadModel) DeleteVideo() tea.Msg {
-	sm.VideoFile.Close()
-	os.Remove(sm.directory + string(os.PathSeparator) + sm.DownloadedFileName)
+	sm.downloadType.CancelVideoDownload(sm.VideoFile, sm.directory, sm.videoName)
 	return nil
 }
 

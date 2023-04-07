@@ -58,7 +58,10 @@ func (m startingUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case " ":
 			m.selected = m.cursor
 		case "enter":
-			return InitVideoIdSearchModel(m.choices[m.selected].videoType), nil
+			nextModel := InitVideoIdSearchModel(m.choices[m.selected].videoType)
+			return nextModel , func() tea.Msg {
+				return StartVideoIdSearch{}
+			}
 
 		}
 	}

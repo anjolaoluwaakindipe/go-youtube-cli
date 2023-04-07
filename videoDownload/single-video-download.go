@@ -54,11 +54,10 @@ func (vd *SingleVideoDownload) getStream(downloadType DownloadType, videoUrl str
 }
 
 // shows the download progress of the yooutbe video
-func (vd *SingleVideoDownload) showDownloadProgress(file *os.File, expectedSize int64, video *youtube.Video, downloadedFileName string) {
+func (vd *SingleVideoDownload) showDownloadProgress(file *os.File, expectedSize int64, video *youtube.Video, downloadedFileName string, progressChan *chan appmsg.DownloadProgressMsg) {
 	// run the concurrent function
 	go func() {
 		for {
-
 			if file == nil {
 				break
 			}
@@ -76,14 +75,12 @@ func (vd *SingleVideoDownload) showDownloadProgress(file *os.File, expectedSize 
 			amountDownloaded := fileInfo.Size()
 			progress := float64(amountDownloaded) / float64(expectedSize)
 
+
+			// makes sure that progress messages are sent to the ui
+			*progressChan <- appmsg.DownloadProgressMsg{Progress: progress, TotalDownloadSize: expectedSize, AmountDownloaded: amountDownloaded, VideoName: video.Title, VideoAuthor: video.Author, DefaultFileName: downloadedFileName, VideoFile: file}
 			// check if they are equal thus breaking the loop
 			if amountDownloaded == expectedSize {
 				break
-			}
-
-			// makes sure that progress messages are sent to the ui
-			if vd.program != nil {
-				vd.program.Send(appmsg.DownloadProgressMsg{Progress: progress, TotalDownloadSize: expectedSize, AmountDownloaded: amountDownloaded, VideoName: video.Title, VideoAuthor: video.Author, DefaultFileName: downloadedFileName, VideoFile: file})
 			}
 
 			// checks every 500 millisecond
@@ -98,7 +95,7 @@ func (vd *SingleVideoDownload) showDownloadProgress(file *os.File, expectedSize 
 }
 
 // download the video stream into a file
-func (vd *SingleVideoDownload) Download(videoId string, directoryPath string) {
+func (vd *SingleVideoDownload) Download(videoId string, directoryPath string, progressChan *chan appmsg.DownloadProgressMsg) {
 	// call stream method to get the video stream
 	video, stream, videoSize, streamErr := vd.getStream(SingleVideo, videoId)
 
@@ -117,9 +114,8 @@ func (vd *SingleVideoDownload) Download(videoId string, directoryPath string) {
 	if fileCreationErr != nil {
 		log.Fatalln("File Creation Error: " + fileCreationErr.Error() + " 2 ")
 	}
-
 	// begin display the downloand progress of the video
-	vd.showDownloadProgress(file, videoSize, video, downloadedFileName)
+	vd.showDownloadProgress(file, videoSize, video, downloadedFileName, progressChan)
 
 	_, fileCopyErr := io.Copy(file, stream)
 
@@ -130,11 +126,11 @@ func (vd *SingleVideoDownload) Download(videoId string, directoryPath string) {
 
 }
 
-func (vd *SingleVideDownload) CancelVideoDownload(file *os.File, directory string, filename string) {
+func (vd *SingleVideoDownload) CancelVideoDownload(file *os.File, directory string, filename string) {
 	file.Close()
 	os.Remove(directory + string(os.PathSeparator) + filename)
 }
 
-func (vd *SingleVideDownload) GetType() string {
+func (vd *SingleVideoDownload) GetType() string {
 	return "Single Video"
 }

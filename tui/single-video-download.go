@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/anjolaoluwaakindipe/fyne-youtube/app"
 	"github.com/anjolaoluwaakindipe/fyne-youtube/appmsg"
 	"github.com/anjolaoluwaakindipe/fyne-youtube/tui/state"
 	videodownload "github.com/anjolaoluwaakindipe/fyne-youtube/videodownload"
@@ -40,6 +41,8 @@ type singleVideoDownloadModel struct {
 	VideoFile          *os.File
 }
 
+type StartSingleVideoDownload struct{}
+
 // constructor
 func InitializeSingleVideoDownloadModel(videoDownload videodownload.VideDownload) *singleVideoDownloadModel {
 	globalState := state.GlobalStateInstance()
@@ -59,13 +62,30 @@ func pauseProgress() tea.Cmd {
 }
 
 // init command func
-func (sm singleVideoDownloadModel) Init() tea.Cmd {
-	sm.downloadType.Download(sm.videoId, sm.directory)
+func (sm *singleVideoDownloadModel) Init() tea.Cmd {
+	// return func() tea.Msg {
+	// 	fmt.Println("hello")
+	// 	return appmsg.StartDownload{}
+	// }
+	progressChan := make(chan appmsg.DownloadProgressMsg)
+	go sm.downloadType.Download(sm.videoId, sm.directory, &progressChan)
+	go func() {
+		for {
+			select {
+			case <-progressChan:
+				progress := <- progressChan
+				app.TuiProgram.Send(progress)
+				if(progress.AmountDownloaded == progress.TotalDownloadSize){
+					return;
+				}
+			}
+		}
+	}()
 	return nil
 }
 
 // UI layer
-func (sm singleVideoDownloadModel) View() string {
+func (sm *singleVideoDownloadModel) View() string {
 	s := ""
 
 	s = fmt.Sprintf("\n You are downloading %v by %v  into  %v \n\n", sm.videoName, sm.videoAuthor, sm.directory)
@@ -82,7 +102,7 @@ func (sm singleVideoDownloadModel) View() string {
 }
 
 // event listener
-func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (sm *singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -113,7 +133,11 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// 	// percentage value explicitly, too.
 	// 	cmd := sm.progress.IncrPercent(0.25)
 	// 	return sm, tea.Batch(tickCmd(), cmd)
-
+	// case appmsg.StartDownload:
+	// 	go func (){
+	// 		sm.downloadType.Download(sm.videoId, sm.directory)
+	// 	}()
+	// 	return sm, nil
 	case appmsg.DownloadProgressMsg:
 		var cmds []tea.Cmd
 		if msg.Progress >= 1.0 {
@@ -142,6 +166,9 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case appmsg.DownloadComplete:
 		return InitializeSuccessfulDownloadModel(), nil
 
+	case StartSingleVideoDownload:
+		return sm, sm.Init()
+
 	default:
 		return sm, nil
 	}
@@ -149,7 +176,7 @@ func (sm singleVideoDownloadModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // commans
 func (sm *singleVideoDownloadModel) DeleteVideo() tea.Msg {
-	sm.downloadType.CancelVideoDownload(sm.VideoFile, sm.directory, sm.videoName)
+	sm.downloadType.CancelVideoDownload(sm.VideoFile, sm.directory, sm.DownloadedFileName)
 	return nil
 }
 

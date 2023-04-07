@@ -19,3 +19,5 @@ type DownloadAnotherVideoMsg struct{}
 type QuitMsg struct{}
 
 type DownloadComplete struct{}
+
+type StartDownload struct{}

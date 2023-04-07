@@ -22,24 +22,26 @@ type videoIdSearchModel struct {
 	err       error
 }
 
+type StartVideoIdSearch struct{}
+
 // constructor
-func InitVideoIdSearchModel(videoDownload videodownload.VideDownload) videoIdSearchModel {
+func InitVideoIdSearchModel(videoDownload videodownload.VideDownload) *videoIdSearchModel {
 	ti := textinput.New()
 	ti.Placeholder = "e.g. YalT4KKnLao"
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20
 
-	return videoIdSearchModel{download: videoDownload, textInput: ti}
+	return &videoIdSearchModel{download: videoDownload, textInput: ti}
 }
 
 // Initialization function
-func (vm videoIdSearchModel) Init() tea.Cmd {
+func (vm* videoIdSearchModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
 // Application UI
-func (vm videoIdSearchModel) View() string {
+func (vm* videoIdSearchModel) View() string {
 	s := ""
 
 	s = fmt.Sprintf("\n Pleas input the %s id", vm.download.GetType())
@@ -56,7 +58,7 @@ func (vm videoIdSearchModel) View() string {
 }
 
 // event listener
-func (vm videoIdSearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (vm* videoIdSearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	// input keys
 	case tea.KeyMsg:
@@ -70,9 +72,13 @@ func (vm videoIdSearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			globalState := state.GlobalStateInstance()
 			globalState.SetVideoId(strings.ReplaceAll(vm.textInput.Value(), "\n", ""))
-			return InitializeDownloadLocationModel(vm.download), nil
+			nextModel := InitializeDownloadLocationModel(vm.download)
+			return nextModel, func() tea.Msg {
+				return StartDownloadLocationModel{}
+			}
 		}
-
+	case StartVideoIdSearch:
+		vm.Init()
 	// error handling
 	case errorMsg:
 		vm.err = msg

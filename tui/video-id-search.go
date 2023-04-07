@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	videodownload "github.com/anjolaoluwaakindipe/fyne-youtube/videodownload"
@@ -16,21 +17,20 @@ type errorMsg error
 
 // model/state
 type videoIdSearchModel struct {
-	videoType videodownload.DownloadType
+	download  videodownload.VideDownload
 	textInput textinput.Model
-	err error
+	err       error
 }
 
 // constructor
-func InitVideoIdSearchModel() videoIdSearchModel {
+func InitVideoIdSearchModel(videoDownload videodownload.VideDownload) videoIdSearchModel {
 	ti := textinput.New()
 	ti.Placeholder = "e.g. YalT4KKnLao"
 	ti.Focus()
 	ti.CharLimit = 156
 	ti.Width = 20
 
-	globalState := state.GlobalStateInstance()
-	return videoIdSearchModel{videoType: globalState.GetDownloadType(), textInput: ti}
+	return videoIdSearchModel{download: videoDownload, textInput: ti}
 }
 
 // Initialization function
@@ -38,19 +38,15 @@ func (vm videoIdSearchModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-// Application UI 
+// Application UI
 func (vm videoIdSearchModel) View() string {
-	s:= ""
-	switch {
-	case vm.videoType == videodownload.SingleVideo:
-		s = "\n Please input the video id \n \n"
-	case vm.videoType == videodownload.PlayList:
-		s= "\n Please input the playlist id\n \n"
-	}
+	s := ""
 
-	if vm.err != nil{
+	s = fmt.Sprintf("\n Pleas input the %s id", vm.download.GetType())
+
+	if vm.err != nil {
 		s = "\n An error occurred while typing\n \n Please quit and try again"
-	}else{
+	} else {
 		s += vm.textInput.View()
 	}
 
@@ -62,19 +58,19 @@ func (vm videoIdSearchModel) View() string {
 // event listener
 func (vm videoIdSearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	// input keys 
+	// input keys
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return vm, tea.Quit
 
 		case "enter":
-			if(strings.ReplaceAll(strings.ReplaceAll(vm.textInput.Value(), " ", "", ) ,"\r\n", "") == ""){
+			if strings.ReplaceAll(strings.ReplaceAll(vm.textInput.Value(), " ", ""), "\r\n", "") == "" {
 				return vm, nil
 			}
 			globalState := state.GlobalStateInstance()
-			globalState.SetVideoId(strings.ReplaceAll(vm.textInput.Value(),"\n", ""))
-			return InitializeDownloadLocationModel(), nil
+			globalState.SetVideoId(strings.ReplaceAll(vm.textInput.Value(), "\n", ""))
+			return InitializeDownloadLocationModel(vm.download), nil
 		}
 
 	// error handling
@@ -87,7 +83,7 @@ func (vm videoIdSearchModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cm tea.Cmd
 
 	// update textinput and cmd
-	vm.textInput , cm = vm.textInput.Update(msg)
+	vm.textInput, cm = vm.textInput.Update(msg)
 
 	return vm, cm
 }

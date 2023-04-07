@@ -105,7 +105,6 @@ func (vd *SingleVideoDownload) Download(videoId string, directoryPath string) {
 	// check for stream error
 	if streamErr != nil {
 		log.Fatalln("File Streaming Error: " + streamErr.Error() + " 1 ")
-		return nil
 	}
 
 	// format the filename so that it is a valid name that can be used with any os
@@ -117,7 +116,6 @@ func (vd *SingleVideoDownload) Download(videoId string, directoryPath string) {
 	// cheeck for errors while creating the file
 	if fileCreationErr != nil {
 		log.Fatalln("File Creation Error: " + fileCreationErr.Error() + " 2 ")
-		return nil
 	}
 
 	// begin display the downloand progress of the video
@@ -128,10 +126,8 @@ func (vd *SingleVideoDownload) Download(videoId string, directoryPath string) {
 	// check for any errors that may occur while downloading
 	if fileCopyErr != nil {
 		log.Fatal("File Copy Error: " + fileCopyErr.Error())
-		return nil
 	}
 
-	return nil
 }
 
 func (vd *SingleVideDownload) CancelVideoDownload(file *os.File, directory string, filename string) {

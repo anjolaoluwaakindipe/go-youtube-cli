@@ -3,7 +3,6 @@ package tui
 import (
 	"fmt"
 
-	"github.com/anjolaoluwaakindipe/fyne-youtube/tui/state"
 	videodownload "github.com/anjolaoluwaakindipe/fyne-youtube/videodownload"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -24,13 +23,13 @@ type startingUIModel struct {
 // Download option struct
 type DownloadOption struct {
 	text      string
-	videoType videodownload.DownloadType
+	videoType videodownload.VideDownload
 }
 
 // constructor to initilaize model. NOTE: This could also have been a variable
 func InitialStartingUIModel() startingUIModel {
 	// create option text for type of download a user wants to execute
-	options := []DownloadOption{{text: "Download a single video", videoType: videodownload.SingleVideo}, {text: "Download a playlist", videoType: videodownload.PlayList}}
+	options := []DownloadOption{{text: "Download a single video", videoType: videodownload.InitSingleVideoDownload()}}
 	return startingUIModel{choices: options, selected: 0}
 }
 
@@ -58,11 +57,11 @@ func (m startingUIModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case " ":
 			m.selected = m.cursor
-
 		case "enter":
-			globalState := state.GlobalStateInstance()
-			globalState.SetDownloadType(m.choices[m.selected].videoType)
-			return InitVideoIdSearchModel(), nil
+			nextModel := InitVideoIdSearchModel(m.choices[m.selected].videoType)
+			return nextModel , func() tea.Msg {
+				return StartVideoIdSearch{}
+			}
 
 		}
 	}

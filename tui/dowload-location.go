@@ -9,12 +9,14 @@ import (
 
 // state / model
 type downloadLocationModel struct {
-	textInput textinput.Model
-	videoDownload *videodownload.VideoDownload
+	textInput     textinput.Model
+	videoDownload videodownload.VideDownload
 }
 
+type StartDownloadLocationModel struct{}
+
 // constructor
-func InitializeDownloadLocationModel() downloadLocationModel {
+func InitializeDownloadLocationModel(videoDownload videodownload.VideDownload) *downloadLocationModel {
 
 	ti := textinput.New()
 	ti.Placeholder = "e.g. C:\\Users\\<User>\\Video"
@@ -22,16 +24,17 @@ func InitializeDownloadLocationModel() downloadLocationModel {
 	ti.CharLimit = 156
 	ti.Width = 20
 
-	return downloadLocationModel{textInput: ti, videoDownload: videodownload.InitVideoDownload()}
+	return &downloadLocationModel{textInput: ti, videoDownload: videoDownload}
 }
 
+
 // init command func
-func (sm downloadLocationModel) Init() tea.Cmd {
+func (sm *downloadLocationModel) Init() tea.Cmd {
 	return nil
 }
 
 // UI layer
-func (sm downloadLocationModel) View() string {
+func (sm *downloadLocationModel) View() string {
 
 	s := "\n Please input a Directory for your Download  \n \n"
 
@@ -43,7 +46,7 @@ func (sm downloadLocationModel) View() string {
 }
 
 // event listener
-func (sm downloadLocationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (sm *downloadLocationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -52,9 +55,14 @@ func (sm downloadLocationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			globalState := state.GlobalStateInstance()
 			globalState.SetDownloadDirectory(sm.textInput.Value())
-			return InitializeSingleVideoDownloadModel(), sm.videoDownload.SingleVideoDownload(globalState.GetVideoId(), globalState.GetDownloadDirectory())
+			return InitializeSingleVideoDownloadModel(sm.videoDownload), func() tea.Msg {
+				return StartSingleVideoDownload{}
+			}
 		}
+	case StartDownloadLocationModel:
+		return sm, sm.Init()
 	}
+
 
 	var cm tea.Cmd
 

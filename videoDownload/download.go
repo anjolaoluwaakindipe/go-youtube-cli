@@ -17,14 +17,14 @@ const (
 func (dt DownloadType) String() string {
 	switch dt {
 	case SingleVideo:
-		return "SingleVideo"
+		return "Video"
 	case PlayList:
 		return "Playlist"
 	}
 	return "unknown"
 }
 
-type VideDownload interface {
+type VideoDownload interface {
 	GetType() string
 	Download(videoId string, directoryPath string, progressChan *chan appmsg.DownloadProgressMsg)
 	CancelVideoDownload(file *os.File, directory string, filename string)

@@ -29,7 +29,7 @@ type (
 
 // state / model
 type singleVideoDownloadModel struct {
-	downloadType       videodownload.VideDownload
+	downloadType       videodownload.VideoDownload
 	videoId            string
 	progress           progress.Model
 	amountDownloaded   int64
@@ -44,7 +44,7 @@ type singleVideoDownloadModel struct {
 type StartSingleVideoDownload struct{}
 
 // constructor
-func InitializeSingleVideoDownloadModel(videoDownload videodownload.VideDownload) *singleVideoDownloadModel {
+func InitializeSingleVideoDownloadModel(videoDownload videodownload.VideoDownload) *singleVideoDownloadModel {
 	globalState := state.GlobalStateInstance()
 	return &singleVideoDownloadModel{videoId: globalState.GetVideoId(), downloadType: videoDownload, progress: progress.New(progress.WithDefaultGradient()), directory: globalState.GetDownloadDirectory()}
 }
@@ -71,13 +71,12 @@ func (sm *singleVideoDownloadModel) Init() tea.Cmd {
 	go sm.downloadType.Download(sm.videoId, sm.directory, &progressChan)
 	go func() {
 		for {
-			select {
-			case <-progressChan:
-				progress := <- progressChan
-				app.TuiProgram.Send(progress)
-				if(progress.AmountDownloaded == progress.TotalDownloadSize){
-					return;
-				}
+			progress := <-progressChan
+			app.TuiProgram.Send(progress)
+			if progress.IsDone {
+				app.TuiProgram.Send(appmsg.DownloadComplete{})
+				close(progressChan)
+				return
 			}
 		}
 	}()

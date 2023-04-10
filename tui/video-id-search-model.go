@@ -17,7 +17,7 @@ type errorMsg error
 
 // model/state
 type videoIdSearchModel struct {
-	download  videodownload.VideDownload
+	download  videodownload.VideoDownload
 	textInput textinput.Model
 	err       error
 }
@@ -25,7 +25,7 @@ type videoIdSearchModel struct {
 type StartVideoIdSearch struct{}
 
 // constructor
-func InitVideoIdSearchModel(videoDownload videodownload.VideDownload) *videoIdSearchModel {
+func InitVideoIdSearchModel(videoDownload videodownload.VideoDownload) *videoIdSearchModel {
 	ti := textinput.New()
 	ti.Placeholder = "e.g. YalT4KKnLao"
 	ti.Focus()

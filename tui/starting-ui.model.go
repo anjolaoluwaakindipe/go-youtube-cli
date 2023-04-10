@@ -23,13 +23,13 @@ type startingUIModel struct {
 // Download option struct
 type DownloadOption struct {
 	text      string
-	videoType videodownload.VideDownload
+	videoType videodownload.VideoDownload
 }
 
 // constructor to initilaize model. NOTE: This could also have been a variable
 func InitialStartingUIModel() startingUIModel {
 	// create option text for type of download a user wants to execute
-	options := []DownloadOption{{text: "Download a single video", videoType: videodownload.InitSingleVideoDownload()}}
+	options := []DownloadOption{{text: "Download a single video", videoType: videodownload.InitSingleVideoDownload()}, {text: "Download a playlist", videoType: videodownload.InitPlaylistVideoDownload()}}
 	return startingUIModel{choices: options, selected: 0}
 }
 

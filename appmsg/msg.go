@@ -10,6 +10,9 @@ type DownloadProgressMsg struct {
 	VideoAuthor       string
 	DefaultFileName   string
 	VideoFile         *os.File
+	IsDone            bool
+	VideosDownloaded  int
+	AllVideos         int
 }
 
 type DownloadErrorMsg error

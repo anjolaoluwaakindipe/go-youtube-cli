@@ -2,7 +2,7 @@ package tui
 
 import (
 	"github.com/anjolaoluwaakindipe/fyne-youtube/tui/state"
-	"github.com/anjolaoluwaakindipe/fyne-youtube/videodownload"
+	videodownload "github.com/anjolaoluwaakindipe/fyne-youtube/videodownload"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -10,13 +10,13 @@ import (
 // state / model
 type downloadLocationModel struct {
 	textInput     textinput.Model
-	videoDownload videodownload.VideDownload
+	videoDownload videodownload.VideoDownload
 }
 
 type StartDownloadLocationModel struct{}
 
 // constructor
-func InitializeDownloadLocationModel(videoDownload videodownload.VideDownload) *downloadLocationModel {
+func InitializeDownloadLocationModel(videoDownload videodownload.VideoDownload) *downloadLocationModel {
 
 	ti := textinput.New()
 	ti.Placeholder = "e.g. C:\\Users\\<User>\\Video"
@@ -26,7 +26,6 @@ func InitializeDownloadLocationModel(videoDownload videodownload.VideDownload) *
 
 	return &downloadLocationModel{textInput: ti, videoDownload: videoDownload}
 }
-
 
 // init command func
 func (sm *downloadLocationModel) Init() tea.Cmd {
@@ -55,14 +54,24 @@ func (sm *downloadLocationModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "enter":
 			globalState := state.GlobalStateInstance()
 			globalState.SetDownloadDirectory(sm.textInput.Value())
-			return InitializeSingleVideoDownloadModel(sm.videoDownload), func() tea.Msg {
-				return StartSingleVideoDownload{}
+			var model tea.Model
+			var startMsg tea.Msg
+			switch sm.videoDownload.GetType() {
+			case videodownload.SingleVideo.String():
+				model = InitializeSingleVideoDownloadModel(sm.videoDownload)
+				startMsg = StartSingleVideoDownload{}
+			default:
+				model = InitPlaylistDownloadModel(sm.videoDownload)
+				startMsg = StartPlaylistDownload{}
+			}
+
+			return model, func() tea.Msg {
+				return startMsg
 			}
 		}
 	case StartDownloadLocationModel:
 		return sm, sm.Init()
 	}
-
 
 	var cm tea.Cmd
 

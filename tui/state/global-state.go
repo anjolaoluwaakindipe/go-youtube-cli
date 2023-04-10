@@ -18,7 +18,7 @@ var instance globalState
 // var
 var once sync.Once
 
-func GlobalStateInstance() *globalState{
+func GlobalStateInstance() *globalState {
 	once.Do(func() {
 		instance = globalState{}
 	})
@@ -26,24 +26,24 @@ func GlobalStateInstance() *globalState{
 	return &instance
 }
 
-// getters 
-func (gs *globalState) GetVideoId () string{
+// getters
+func (gs *globalState) GetVideoId() string {
 	return gs.videoId
 }
-func (gs *globalState) GetDownloadType () videodownload.DownloadType{
+func (gs *globalState) GetDownloadType() videodownload.DownloadType {
 	return gs.downloadType
 }
-func (gs *globalState) GetDownloadDirectory () string{
+func (gs *globalState) GetDownloadDirectory() string {
 	return gs.downloadDirectory
 }
 
 // setters
-func (gs *globalState) SetVideoId (newVideoId string) {
+func (gs *globalState) SetVideoId(newVideoId string) {
 	gs.videoId = newVideoId
 }
-func (gs *globalState) SetDownloadType (newDownloadType videodownload.DownloadType) {
+func (gs *globalState) SetDownloadType(newDownloadType videodownload.DownloadType) {
 	gs.downloadType = newDownloadType
 }
-func (gs *globalState) SetDownloadDirectory (newDonwloadDirectory string) {
+func (gs *globalState) SetDownloadDirectory(newDonwloadDirectory string) {
 	gs.downloadDirectory = newDonwloadDirectory
 }

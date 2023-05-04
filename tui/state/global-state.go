@@ -30,9 +30,11 @@ func GlobalStateInstance() *globalState {
 func (gs *globalState) GetVideoId() string {
 	return gs.videoId
 }
+
 func (gs *globalState) GetDownloadType() videodownload.DownloadType {
 	return gs.downloadType
 }
+
 func (gs *globalState) GetDownloadDirectory() string {
 	return gs.downloadDirectory
 }
@@ -41,9 +43,11 @@ func (gs *globalState) GetDownloadDirectory() string {
 func (gs *globalState) SetVideoId(newVideoId string) {
 	gs.videoId = newVideoId
 }
+
 func (gs *globalState) SetDownloadType(newDownloadType videodownload.DownloadType) {
 	gs.downloadType = newDownloadType
 }
+
 func (gs *globalState) SetDownloadDirectory(newDonwloadDirectory string) {
 	gs.downloadDirectory = newDonwloadDirectory
 }

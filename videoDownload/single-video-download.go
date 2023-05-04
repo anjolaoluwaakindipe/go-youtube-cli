@@ -115,7 +115,6 @@ func (vd *SingleVideoDownload) Download(videoId string, directoryPath string, pr
 	if fileCopyErr != nil {
 		log.Fatal("File Copy Error: " + fileCopyErr.Error())
 	}
-
 }
 
 func (vd *SingleVideoDownload) CancelVideoDownload(file *os.File, directory string, filename string) {

@@ -27,9 +27,9 @@ func InitPlaylistVideoDownload() VideoDownload {
 func (pd *PlaylistDownload) GetType() string {
 	return PlayList.String()
 }
+
 func (pd *PlaylistDownload) Download(videoId string, directoryPath string, progressChan *chan appmsg.DownloadProgressMsg) {
 	playlist, err := pd.videoClient.GetPlaylist(videoId)
-
 	if err != nil {
 		log.Fatalf("Failed to fetch playlist with id %v: %v", videoId, err)
 	}
@@ -52,8 +52,7 @@ func (pd *PlaylistDownload) Download(videoId string, directoryPath string, progr
 }
 
 func (pd *PlaylistDownload) DownloadAllVideos(wg sync.WaitGroup, playlistDirectory string, progress *chan appmsg.DownloadProgressMsg) {
-
-	for _, video := range pd.videos {
+	for i, video := range pd.videos {
 		videoInfo, err := pd.videoClient.GetVideo(video.ID)
 		if err != nil {
 			log.Fatalf("Failed to fetch video metadata: %v", err)
@@ -64,7 +63,7 @@ func (pd *PlaylistDownload) DownloadAllVideos(wg sync.WaitGroup, playlistDirecto
 
 		wg.Add(1)
 
-		go func(videoInfo *youtube.Video, filename string) {
+		go func(index int, videoInfo *youtube.Video, filename string) {
 			defer wg.Done()
 
 			videoFormat := videoInfo.Formats.WithAudioChannels()
@@ -80,19 +79,19 @@ func (pd *PlaylistDownload) DownloadAllVideos(wg sync.WaitGroup, playlistDirecto
 				log.Fatalf("File Creation Error: %v", fileCreationErr)
 			}
 
-			pd.showDownloadProgress(file, videoSize, videoInfo, filename, progress)
+			pd.showDownloadProgress(index, file, videoSize, videoInfo, filename, progress)
 
 			_, filecopyErr := io.Copy(file, stream)
 
 			if filecopyErr != nil {
 				log.Fatalf("File Copy Error: %v", filecopyErr)
 			}
-		}(videoInfo, filename)
+		}(i, videoInfo, filename)
 	}
 }
 
 // shows the download progress of the yooutbe video
-func (pd *PlaylistDownload) showDownloadProgress(file *os.File, expectedSize int64, video *youtube.Video, downloadedFileName string, progressChan *chan appmsg.DownloadProgressMsg) {
+func (pd *PlaylistDownload) showDownloadProgress(index int, file *os.File, expectedSize int64, video *youtube.Video, downloadedFileName string, progressChan *chan appmsg.DownloadProgressMsg) {
 	// run the concurrent function
 	go func() {
 		for {
@@ -114,7 +113,7 @@ func (pd *PlaylistDownload) showDownloadProgress(file *os.File, expectedSize int
 
 			// makes sure that progress messages are sent to the ui
 			pd.mu.Lock()
-			*progressChan <- appmsg.DownloadProgressMsg{Progress: progress, TotalDownloadSize: expectedSize, AmountDownloaded: amountDownloaded, VideoName: video.Title, VideoAuthor: video.Author, DefaultFileName: downloadedFileName, VideoFile: file, IsDone: false, VideosDownloaded: pd.doneCount, AllVideos: len(pd.videos)}
+			*progressChan <- appmsg.DownloadProgressMsg{Index: index, Progress: progress, TotalDownloadSize: expectedSize, AmountDownloaded: amountDownloaded, VideoName: video.Title, VideoAuthor: video.Author, DefaultFileName: downloadedFileName, VideoFile: file, IsDone: false, VideosDownloaded: pd.doneCount, AllVideos: len(pd.videos)}
 			pd.mu.Unlock()
 			// check if they are equal thus breaking the loop
 			if amountDownloaded == expectedSize {
@@ -123,7 +122,7 @@ func (pd *PlaylistDownload) showDownloadProgress(file *os.File, expectedSize int
 				pd.mu.Unlock()
 				if pd.doneCount == len(pd.videos) {
 					pd.mu.Lock()
-					*progressChan <- appmsg.DownloadProgressMsg{Progress: progress, TotalDownloadSize: expectedSize, AmountDownloaded: amountDownloaded, VideoName: video.Title, VideoAuthor: video.Author, DefaultFileName: downloadedFileName, VideoFile: file, IsDone: true, VideosDownloaded: pd.doneCount, AllVideos: len(pd.videos)}
+					*progressChan <- appmsg.DownloadProgressMsg{Index: index, Progress: progress, TotalDownloadSize: expectedSize, AmountDownloaded: amountDownloaded, VideoName: video.Title, VideoAuthor: video.Author, DefaultFileName: downloadedFileName, VideoFile: file, IsDone: true, VideosDownloaded: pd.doneCount, AllVideos: len(pd.videos)}
 					pd.mu.Unlock()
 				}
 				file.Close()

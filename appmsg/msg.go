@@ -13,6 +13,7 @@ type DownloadProgressMsg struct {
 	IsDone            bool
 	VideosDownloaded  int
 	AllVideos         int
+	Index             int
 }
 
 type DownloadErrorMsg error
